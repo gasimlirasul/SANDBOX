@@ -1,33 +1,23 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SANDBOX.Data;
 using SANDBOX.Dtos.GroupDTOs;
 using SANDBOX.Dtos.HomeworkDTOs;
 using SANDBOX.Dtos.UserDTOs;
 using SANDBOX.Models;
-using System.Runtime.CompilerServices;
 
-namespace SANDBOX.Controllers
+namespace SANDBOX.Services.GroupsService
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize]
-    public class GroupController(AppDbContext _context) : ControllerBase
+    public class GroupsService(AppDbContext _context) : IGroupsService
     {
-        [HttpGet]
-        public async Task<ActionResult<List<GroupResponse>>> GetAllGroups()
+        public async Task<List<GroupResponse>> GetAllGroups()
         {
             return await _context.Groups.Select(g => new GroupResponse
             {
                 Name = g.Name
             })
-            .ToListAsync();
+           .ToListAsync();
         }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<GroupResponse>> GetGroup(int id)
+        public async Task<GroupResponse?> GetGroup(int id)
         {
             var group = await _context.Groups
                 .Where(g => g.Id == id)
@@ -37,65 +27,54 @@ namespace SANDBOX.Controllers
                 })
                 .FirstOrDefaultAsync();
             if (group == null)
-                return NotFound("Group does not exist");
-            return Ok(group);
+                return null;
+            return group;
         }
-
-        [HttpPost]
-        [Authorize(Roles = "Teacher, Admin")]
-        public async Task<ActionResult> CreateGroup(GroupRequest request)
+        public async Task<GroupResponse> CreateGroup(GroupRequest request)
         {
-            var group = new Group
+            Group newGroup = new Group
             {
                 Name = request.Name
             };
-            _context.Add(group);
+            _context.Add(newGroup);
             await _context.SaveChangesAsync();
 
             var response = new GroupResponse
             {
-                Name = group.Name
+                Id = newGroup.Id,
+                Name = newGroup.Name
             };
-            return CreatedAtAction(nameof(GetGroup), new { id = group.Id }, response);
+            return response;
         }
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Teacher, Admin")]
-        public async Task<ActionResult<GroupResponse>> UpdateGroup(int id, GroupRequest request)
+        public async Task<GroupResponse?> UpdateGroup(int id, GroupRequest request)
         {
             var group = await _context.Groups.FindAsync(id);
             if (group == null)
-                return NotFound("Group does not exist");
+                return null;
             group.Name = request.Name;
             await _context.SaveChangesAsync();
             var response = new GroupResponse
             {
                 Name = group.Name
             };
-            return Ok(response);
+            return response;
         }
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Teacher, Admin")]
-        public async Task<ActionResult> DeleteGroup(int id)
+        public async Task<bool> DeleteGroup(int id)
         {
             var group = await _context.Groups.FindAsync(id);
             if (group == null)
-                return NotFound("Group does not exist");
+                return false;
             _context.Remove(group);
             await _context.SaveChangesAsync();
-            return NoContent();
+            return true;
         }
-
-        [HttpGet("{id}/users")]
-        [Authorize(Roles = "Teacher, Admin")]
-        public async Task<ActionResult<List<UserResponse>>> GetUsers(int id)
+        public async Task<List<UserResponse>?> GetUsers(int id)
         {
             var group = await _context.Groups
                 .Include(g => g.Users)
                 .FirstOrDefaultAsync(g => g.Id == id);
             if (group == null)
-                return NotFound("Group does not exist");
+                return null;
 
             var list = group.Users
                 .Select(u => new UserResponse
@@ -103,48 +82,42 @@ namespace SANDBOX.Controllers
                     Username = u.Username
                 })
                 .ToList();
-            return Ok(list);
+            return list;
         }
-
-        [HttpPost("{id}/add-user")]
-        [Authorize(Roles = "Teacher, Admin")]
-        public async Task<ActionResult> AddUser(int id, string name)
+        public async Task<bool> AddUser(int id, string name)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == name);
             var group = await _context.Groups.FindAsync(id);
 
             if (user == null)
-                return NotFound("User does not exist");
+                return false;
 
             if (group == null)
-                return NotFound("Group does not exist");
+                return false;
 
             user.Groups.Add(group);
             await _context.SaveChangesAsync();
-            return Ok();
+            return true;
         }
-
-        [HttpPost("{id}/add-hw")]
-        [Authorize(Roles = "Teacher, Admin")]
-        public async Task<ActionResult> AddHW(int id, CreateHWRequest request)
+        public async Task<bool> AddHW(int id, CreateHWRequest request)
         {
             var group = await _context.Groups.FindAsync(id);
             if (group == null)
-                return NotFound("Group does not exist");
+                return false;
             var hw = new Homework
             {
                 Name = request.Name,
                 Deadline = request.Deadline
             };
             List<Problem> problems = [];
-            foreach(string name in request.ProblemNames)
+            foreach (string name in request.ProblemNames)
             {
                 var problem = await _context.Problems
                                             .Where(p => p.Name == name)
                                             .FirstOrDefaultAsync();
                 if (problem == null)
                 {
-                    return BadRequest("Invalid problem name sequence");
+                    return false;
                 }
                 problems.Add(problem);
             }
@@ -156,17 +129,16 @@ namespace SANDBOX.Controllers
             group.HWs.Add(hw);
 
             await _context.SaveChangesAsync();
-            return Ok("Homework added");
+            return true;
         }
-        [HttpGet("{id}/all-hws")]
-        public async Task<ActionResult<List<HomeworkResponse>>> GetHomeworks(int id)
+        public async Task<List<HomeworkResponse>?> GetHomeworks(int id)
         {
             var group = await _context.Groups
                 .Include(g => g.HWs)
                 .Where(g => g.Id == id)
                 .FirstOrDefaultAsync();
             if (group == null)
-                return NotFound("Group does not exist");
+                return null;
 
             var list = group.HWs
                 .Select(h => new HomeworkResponse
@@ -175,7 +147,7 @@ namespace SANDBOX.Controllers
                     Deadline = h.Deadline
                 })
                 .ToList();
-            return Ok(list);
+            return list;
         }
     }
 }

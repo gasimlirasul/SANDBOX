@@ -1,20 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SANDBOX.Data;
 using SANDBOX.Dtos.ProblemDTOs;
 using SANDBOX.Dtos.UserDTOs;
+using SANDBOX.Models;
 using System.Security.Claims;
 
-namespace SANDBOX.Controllers
+namespace SANDBOX.Services.UsersService
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize]
-    public class UserController(AppDbContext _context) : ControllerBase
+    public class UsersService(AppDbContext _context) : IUsersService
     {
-        [HttpGet]
-        public async Task<ActionResult<List<UserResponse>>> GetAllUsers()
+        public async Task<List<UserResponse>> GetAllUsers()
         {
             return await _context.Users.Select(u => new UserResponse
             {
@@ -23,8 +18,7 @@ namespace SANDBOX.Controllers
             .ToListAsync();
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserResponse>> GetUser(int id)
+        public async Task<UserResponse?> GetUser(int id)
         {
             var user = await _context.Users
                 .Where(u => u.Id == id)
@@ -33,52 +27,39 @@ namespace SANDBOX.Controllers
                     Username = u.Username
                 })
                 .FirstOrDefaultAsync();
-
             if (user == null)
-                return NotFound("There is no user with the given id"); 
-            
-            return Ok(user);
+                return null;
+            return user;
         }
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ProblemResponse>> UpdateUser(int id, UpdateUserRequest updatedUser)
+        public async Task<UserResponse?> UpdateUser(int id, UpdateUserRequest updatedUser)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-                return NotFound("User with the given id does not exist");
+                return null;
             user.Username = updatedUser.Username;
             await _context.SaveChangesAsync();
             UserResponse response = new UserResponse
             {
                 Username = user.Username
             };
-            return Ok(response);
+            return response;
         }
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeleteUser(int id)
+        public async Task<bool> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-                return NotFound("User with the given id does not exist");
+                return false;
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
-            return NoContent();
+            return true;
         }
-
-        [HttpGet("solved")]
-        public async Task<ActionResult<List<ProblemResponse>>> AllSolvedProblems()
+        public async Task<List<ProblemResponse>?> AllSolvedProblems(int id)
         {
-            var id = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
             var user = await _context.Users
                 .Include(u => u.SolvedProblems)
                 .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
-                return NotFound("User does not exist");
+                return null;
             var list = user.SolvedProblems
                 .Select(p => new ProblemResponse
                 {

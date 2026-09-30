@@ -1,22 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SANDBOX.Data;
 using SANDBOX.Dtos.ProblemDTOs;
 using SANDBOX.Dtos.TagDTOs;
 using SANDBOX.Models;
 using System.Security.Claims;
 
-namespace SANDBOX.Controllers
+namespace SANDBOX.Services.ProblemsService
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize]
-    public class ProblemController(AppDbContext _context) : ControllerBase
+    public class ProblemsService(AppDbContext _context) : IProblemsService
     {
-        [HttpGet("all")]
-        public async Task<ActionResult<List<ProblemResponse>>> GetAllProblems()
+        public async Task<List<ProblemResponse>> GetAllProblems()
         {
             return await _context.Problems.Select(p => new ProblemResponse
             {
@@ -24,9 +17,7 @@ namespace SANDBOX.Controllers
             })
             .ToListAsync();
         }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ProblemResponse>> GetProblem(int id)
+        public async Task<ProblemResponse?> GetProblem(int id)
         {
             var problem = await _context.Problems
                 .Where(p => p.Id == id)
@@ -37,13 +28,11 @@ namespace SANDBOX.Controllers
                 .FirstOrDefaultAsync();
 
             if (problem == null)
-                return NotFound("Problem with the given id does not exist");
+                return null;
 
-            return Ok(problem);
+            return problem;
         }
-        [HttpPost]
-        [Authorize(Roles = "Teacher")]
-        public async Task<ActionResult> CreateProblem(ProblemRequest request)
+        public async Task<ProblemResponse> CreateProblem(ProblemRequest request)
         {
             Problem newProblem = new Problem
             {
@@ -55,93 +44,73 @@ namespace SANDBOX.Controllers
 
             ProblemResponse response = new ProblemResponse
             {
-                Name = request.Name,
+                Id = newProblem.Id,
+                Name = request.Name
             };
-            return CreatedAtAction(nameof(GetProblem), new { id = newProblem.Id }, response);
+            return response;
         }
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Teacher")]
-        public async Task<ActionResult<ProblemResponse>> UpdateProblem(int id, ProblemRequest request)
+        public async Task<ProblemResponse?> UpdateProblem(int id, ProblemRequest request)
         {
             var problem = await _context.Problems.FindAsync(id);
             if (problem == null)
-                return NotFound("Problem with the given id does not exist");
+                return null;
             problem.Name = request.Name;
             await _context.SaveChangesAsync();
             ProblemResponse response = new ProblemResponse
             {
                 Name = problem.Name
             };
-            return Ok(response);
+            return response;
         }
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Teacher")]
-        public async Task<ActionResult> DeleteProblem(int id)
+        public async Task<bool> DeleteProblem(int id)
         {
             var problem = await _context.Problems.FindAsync(id);
             if (problem == null)
-                return NotFound("Problem with the given id does not exist");
+                return false;
             _context.Problems.Remove(problem);
             await _context.SaveChangesAsync();
-            return NoContent();
+            return true;
         }
-
-
-        
-        [HttpPost("{id}/submit")]
-        public async Task<ActionResult> AcceptedSubmission(int id)
+        public async Task<bool> AcceptedSubmission(int id, int userId)
         {
-            var userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
-
             var user = await _context.Users.FindAsync(userId);
             var problem = await _context.Problems.FindAsync(id);
 
             if (problem == null)
-                return NotFound("Problem with the given id does not exist");
+                return false;
             if (user == null)
-                return NotFound("User with the given id does not exist");
-
+                return false;
             user.SolvedProblems.Add(problem);
             await _context.SaveChangesAsync();
-            return Ok("Accepted");
+            return true;
         }
-
-
-        [HttpPost("add-tag")]
-        public async Task<ActionResult> AddTag(string name, TagRequest request)
+        public async Task<bool> AddTag(string name, TagRequest request)
         {
             var tag = await _context.Tags.Where(t => t.Name == request.Name).FirstOrDefaultAsync();
             var problem = await _context.Problems.Where(p => p.Name == name).FirstOrDefaultAsync();
             if (tag == null)
-                return NotFound("Tag does not exist");
+                return false;
             if (problem == null)
-                return NotFound("Problem does not exist");
+                return false;
 
             problem.Tags.Add(tag);
             await _context.SaveChangesAsync();
-            return Ok();
+            return true;
         }
-
-        
-        [HttpGet("tags")]
-        public async Task<ActionResult<List<ProblemResponse>>> GetProblemTags(string name)
+        public async Task<List<TagResponse>?> GetProblemTags(string name)
         {
             var problem = await _context.Problems
                 .Include(p => p.Tags)
                 .Where(p => p.Name == name)
                 .FirstOrDefaultAsync();
             if (problem == null)
-                return NotFound("Problem does not exist");
+                return null;
             var tags = problem.Tags.Select(t => new TagResponse
             {
                 Name = t.Name
             })
             .ToList();
-            return Ok(tags);
+            return tags;
         }
     }
 }

@@ -6,38 +6,27 @@ using SANDBOX.Data;
 using SANDBOX.Dtos;
 using SANDBOX.Dtos.TagDTOs;
 using SANDBOX.Models;
+using SANDBOX.Services.TagsService;
 
 namespace SANDBOX.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class TagController(AppDbContext _context) : ControllerBase
+    public class TagsController(ITagsService tagsService) : ControllerBase
     {
         [HttpGet]
         public async Task<ActionResult<List<TagResponse>>> GetAllTags()
         {
-            return await _context.Tags.Select(t => new TagResponse
-            {
-                Name = t.Name
-            })
-            .ToListAsync();
+            return Ok(await tagsService.GetAllTags());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TagResponse>> GetTag(int id)
         {
-            var tag = await _context.Tags
-                .Where(t => t.Id == id)
-                .Select(u => new TagResponse
-                {
-                    Name = u.Name
-                })
-                .FirstOrDefaultAsync();
-
+            var tag = await tagsService.GetTag(id);
             if (tag == null)
                 return NotFound("There is no user with the given id");
-
             return Ok(tag);
         }
 
@@ -45,41 +34,27 @@ namespace SANDBOX.Controllers
         [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> UpdateTag(int id, TagRequest request)
         {
-            var tag = await _context.Tags.FindAsync(id);
-            if (tag == null)
+            var response = await tagsService.UpdateTag(id, request);
+            if (response == null)
                 return NotFound("Tag with the given id does not exist");
-            tag.Name = request.Name;
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(response);
         }
 
         [HttpPost]
         [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> CreateTag(TagRequest request)
         {
-            var newTag = new Tag
-            {
-                Name = request.Name
-            };
-            _context.Add(newTag);
-            await _context.SaveChangesAsync();
-            var response = new TagResponse
-            {
-                Name = request.Name
-            };
-            return CreatedAtAction(nameof(GetTag), new {id = newTag.Id}, response);
+            var response = await tagsService.CreateTag(request);
+            return CreatedAtAction(nameof(GetTag), new {id = response.Id}, response);
         }
 
         [HttpDelete]
         [Authorize(Roles = "Teacher, Admin")]
-
         public async Task<ActionResult> DeleteTag(TagRequest deletedTag)
         {
-            var tag = await _context.Tags.Where(t => t.Name == deletedTag.Name).FirstOrDefaultAsync();
-            if (tag == null)
+            bool success = await tagsService.DeleteTag(deletedTag);
+            if (success == false)
                 return NotFound("Tag does not exist");
-            _context.Tags.Remove(tag);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
     }

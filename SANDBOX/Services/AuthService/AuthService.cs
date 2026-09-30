@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SANDBOX.Data;
 using SANDBOX.Dtos;
 using SANDBOX.Dtos.UserDTOs;
+using SANDBOX.Exceptions;
 using SANDBOX.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,14 +14,13 @@ using System.Text;
 
 namespace SANDBOX.Services.AuthService
 {
-    public class AuthService(AppDbContext _context, IConfiguration configuration) : IAuthService
+    public class AuthService(AppDbContext _context, IMapper _mapper, IConfiguration configuration) : IAuthService
     {
-        public async Task<UserResponse?> Register(UserDto request)
+        public async Task<UserResponse> Register(UserDto request)
         {
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
-            {
-                return null;
-            }
+                throw new UnauthorizedException("Username already exists");
+
             var user = new User();
             var hashedPassword = new PasswordHasher<User>()
                 .HashPassword(user, request.Password);
@@ -29,24 +30,18 @@ namespace SANDBOX.Services.AuthService
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            var response = new UserResponse
-            {
-                Username = user.Username
-            };
+            var response = _mapper.Map<UserResponse>(user);
             return response;
         }
-        public async Task<TokenResponse?> Login(UserDto request)
+        public async Task<TokenResponse> Login(UserDto request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user == null)
-            {
-                return null;
-            }
+                throw new UnauthorizedException("Username or password is incorrect");
+
             if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password) ==
                 PasswordVerificationResult.Failed)
-            {
-                return null;
-            }
+                throw new UnauthorizedException("Username or password is incorrect");
 
             var response = new TokenResponse
             {

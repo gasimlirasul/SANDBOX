@@ -6,12 +6,12 @@ namespace SANDBOX.Services.ProblemsService
     public interface IProblemsService
     {
         Task<List<ProblemResponse>> GetAllProblems();
-        Task<ProblemResponse?> GetProblem(int id);
+        Task<ProblemResponse> GetProblem(int id);
         Task<ProblemResponse> CreateProblem(ProblemRequest request);
-        Task<ProblemResponse?> UpdateProblem(int id, ProblemRequest request);
-        Task<bool> DeleteProblem(int id);
-        Task<bool> AcceptedSubmission(int id, int userId);
-        Task<bool> AddTag(string name, TagRequest request);
-        Task<List<TagResponse>?> GetProblemTags(string name);
+        Task<ProblemResponse> UpdateProblem(int id, ProblemRequest request);
+        Task DeleteProblem(int id);
+        Task AcceptedSubmission(int id, int userId);
+        Task AddTag(string name, TagRequest request);
+        Task<List<TagResponse>> GetProblemTags(string name);
     }
 }

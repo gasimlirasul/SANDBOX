@@ -1,71 +1,69 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using SANDBOX.Data;
 using SANDBOX.Dtos.ProblemDTOs;
 using SANDBOX.Dtos.UserDTOs;
+using SANDBOX.Exceptions;
 using SANDBOX.Models;
 using System.Security.Claims;
 
 namespace SANDBOX.Services.UsersService
 {
-    public class UsersService(AppDbContext _context) : IUsersService
+    public class UsersService(AppDbContext _context, IMapper _mapper) : IUsersService
     {
         public async Task<List<UserResponse>> GetAllUsers()
         {
-            return await _context.Users.Select(u => new UserResponse
-            {
-                Username = u.Username
-            })
-            .ToListAsync();
+            return await _context.Users
+                .ProjectTo<UserResponse>(_mapper.ConfigurationProvider)
+                .ToListAsync();
         }
 
-        public async Task<UserResponse?> GetUser(int id)
+        public async Task<UserResponse> GetUser(int id)
         {
             var user = await _context.Users
                 .Where(u => u.Id == id)
-                .Select(u => new UserResponse
-                {
-                    Username = u.Username
-                })
+                .ProjectTo<UserResponse>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
+
             if (user == null)
-                return null;
+                throw new NotFoundException("User does not exist");
+
             return user;
         }
-        public async Task<UserResponse?> UpdateUser(int id, UpdateUserRequest updatedUser)
+        public async Task<UserResponse> UpdateUser(int id, UpdateUserRequest updatedUser)
         {
             var user = await _context.Users.FindAsync(id);
+
             if (user == null)
-                return null;
-            user.Username = updatedUser.Username;
+                throw new NotFoundException("User does not exist");
+
+            _mapper.Map(updatedUser, user);
+
             await _context.SaveChangesAsync();
-            UserResponse response = new UserResponse
-            {
-                Username = user.Username
-            };
+            var response = _mapper.Map<UserResponse>(user);
             return response;
         }
-        public async Task<bool> DeleteUser(int id)
+        public async Task DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
+
             if (user == null)
-                return false;
+                throw new NotFoundException("User does not exist");
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
-            return true;
         }
-        public async Task<List<ProblemResponse>?> AllSolvedProblems(int id)
+        public async Task<List<ProblemResponse>> AllSolvedProblems(int id)
         {
             var user = await _context.Users
                 .Include(u => u.SolvedProblems)
                 .FirstOrDefaultAsync(u => u.Id == id);
+
             if (user == null)
-                return null;
-            var list = user.SolvedProblems
-                .Select(p => new ProblemResponse
-                {
-                    Name = p.Name
-                })
-                .ToList();
+                throw new NotFoundException("User does not exist");
+
+            var list = _mapper.Map<List<ProblemResponse>>(user.SolvedProblems);
             return list;
         }
     }

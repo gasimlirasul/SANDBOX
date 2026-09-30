@@ -27,8 +27,6 @@ namespace SANDBOX.Controllers
         public async Task<ActionResult<GroupResponse>> GetGroup(int id)
         {
             var group = await groupsService.GetGroup(id);
-            if (group == null)
-                return NotFound("Group does not exist");
             return Ok(group);
         }
 
@@ -45,8 +43,6 @@ namespace SANDBOX.Controllers
         public async Task<ActionResult<GroupResponse>> UpdateGroup(int id, GroupRequest request)
         {
             var response = await groupsService.UpdateGroup(id, request);
-            if (response == null)
-                return NotFound("Group does not exist");
             return Ok(response);
         }
 
@@ -54,9 +50,7 @@ namespace SANDBOX.Controllers
         [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> DeleteGroup(int id)
         {
-            bool success = await groupsService.DeleteGroup(id);
-            if (success == false)
-                return NotFound("Group does not exist");
+            await groupsService.DeleteGroup(id);
             return NoContent();
         }
 
@@ -65,8 +59,6 @@ namespace SANDBOX.Controllers
         public async Task<ActionResult<List<UserResponse>>> GetUsers(int id)
         {
             var list = await groupsService.GetUsers(id);
-            if (list == null)
-                return NotFound("User does not exist");
             return Ok(list);
         }
 
@@ -74,9 +66,7 @@ namespace SANDBOX.Controllers
         [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> AddUser(int id, string name)
         {
-            bool success = await groupsService.AddUser(id, name);
-            if (success == false)
-                return NotFound("User or group does not exist");
+            await groupsService.AddUser(id, name);
             return Ok();
         }
 
@@ -84,17 +74,13 @@ namespace SANDBOX.Controllers
         [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> AddHW(int id, CreateHWRequest request)
         {
-            bool success = await groupsService.AddHW(id, request);
-            if (success == false)
-                return NotFound("Group or problem does not exist");
+            await groupsService.AddHW(id, request);
             return Ok();
         }
         [HttpGet("{id}/hws")]
         public async Task<ActionResult<List<HomeworkResponse>>> GetHomeworks(int id)
         {
             var list = await groupsService.GetHomeworks(id);
-            if (list == null)
-                return NotFound("Group does not exist");
             return Ok(list);
         }
     }

@@ -6,9 +6,9 @@ namespace SANDBOX.Services.UsersService
     public interface IUsersService
     {
         Task<List<UserResponse>> GetAllUsers();
-        Task<UserResponse?> GetUser(int id);
-        Task<UserResponse?> UpdateUser(int id, UpdateUserRequest updatedUser);
-        Task<bool> DeleteUser(int id);
-        Task<List<ProblemResponse>?> AllSolvedProblems(int id);
+        Task<UserResponse> GetUser(int id);
+        Task<UserResponse> UpdateUser(int id, UpdateUserRequest updatedUser);
+        Task DeleteUser(int id);
+        Task<List<ProblemResponse>> AllSolvedProblems(int id);
     }
 }

@@ -24,8 +24,6 @@ namespace SANDBOX.Controllers
         public async Task<ActionResult<UserResponse>> Register(UserDto request)
         {
             var response = await authService.Register(request);
-            if (response == null)
-                return BadRequest("User already exists");
             return Ok(response);
         }
 
@@ -33,8 +31,6 @@ namespace SANDBOX.Controllers
         public async Task<ActionResult<TokenResponse>> Login(UserDto request)
         {
             var response = await authService.Login(request);
-            if (response == null)
-                return BadRequest("Username or password is not correct");
             return Ok(response);
         }
     }

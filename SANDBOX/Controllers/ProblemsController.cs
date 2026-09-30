@@ -16,7 +16,7 @@ namespace SANDBOX.Controllers
     [Authorize]
     public class ProblemsController(IProblemsService problemService) : ControllerBase
     {
-        [HttpGet("all")]
+        [HttpGet]
         public async Task<ActionResult<List<ProblemResponse>>> GetAllProblems()
         {
             return Ok(await problemService.GetAllProblems());
@@ -26,12 +26,10 @@ namespace SANDBOX.Controllers
         public async Task<ActionResult<ProblemResponse>> GetProblem(int id)
         {
             var problem = await problemService.GetProblem(id);
-            if (problem == null)
-                return NotFound("Problem with the given id does not exist");
             return Ok(problem);
         }
         [HttpPost]
-        [Authorize(Roles = "Teacher")]
+        [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> CreateProblem(ProblemRequest request)
         {
             var response = await problemService.CreateProblem(request);
@@ -39,51 +37,39 @@ namespace SANDBOX.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Teacher")]
+        [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult<ProblemResponse>> UpdateProblem(int id, ProblemRequest request)
         {
             var response = await problemService.UpdateProblem(id, request);
-            if (response == null)
-                return NotFound("Problem does not exist");
             return Ok(response);
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Teacher")]
+        [Authorize(Roles = "Teacher, Admin")]
         public async Task<ActionResult> DeleteProblem(int id)
         {
-            bool success = await problemService.DeleteProblem(id);
-            if (success == false)
-                return NotFound("Problem does not exist");
+            await problemService.DeleteProblem(id);
             return NoContent();
         }
 
-        [HttpPost("{id}/submit/{userId}")]
+        [HttpPost("{id}/submission/{userId}")]
         public async Task<ActionResult> AcceptedSubmission(int id, int userId)
         {
-            bool success = await problemService.AcceptedSubmission(id, userId);
-            if (success == false)
-                return NotFound("User or problem does not exist");
+            await problemService.AcceptedSubmission(id, userId);
             return Ok();
         }
-
 
         [HttpPost("tags")]
         public async Task<ActionResult> AddTag(string name, TagRequest request)
         {
-            bool success = await problemService.AddTag(name, request);
-            if (success == false)
-                return NotFound("Problem or tag does not exist");
+            await problemService.AddTag(name, request);
             return Ok();
         }
 
-        
         [HttpGet("tags")]
         public async Task<ActionResult<List<TagResponse>>> GetProblemTags(string name)
         {
             var tags = await problemService.GetProblemTags(name);
-            if (tags == null)
-                return NotFound("Problem does not exist");
             return Ok(tags);
         }
     }

@@ -12,6 +12,7 @@ namespace SANDBOX.Mappings
         public MappingProfile()
         {
             CreateMap<User, UserResponse>();
+            CreateMap<UpdateUserRequest, User>();
 
             CreateMap<Problem, ProblemResponse>();
             CreateMap<ProblemRequest, Problem>();

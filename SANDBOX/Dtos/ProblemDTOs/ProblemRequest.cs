@@ -1,7 +1,11 @@
-﻿namespace SANDBOX.Dtos.ProblemDTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SANDBOX.Dtos.ProblemDTOs
 {
     public class ProblemRequest
     {
-        public string Name { get; set; } = "";
+        [Required]
+        [StringLength(50, MinimumLength = 3)]
+        public string Name { get; set; } = null!;
     }
 }

@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace SANDBOX.Services.UsersService
 {
-    public class UsersService(AppDbContext _context, IMapper _mapper) : IUsersService
+    public class UsersService(AppDbContext _context, IMapper _mapper, ILogger<UsersService> _logger) : IUsersService
     {
         public async Task<List<UserResponse>> GetAllUsers()
         {
@@ -39,6 +39,7 @@ namespace SANDBOX.Services.UsersService
                 throw new NotFoundException("User does not exist");
 
             _mapper.Map(updatedUser, user);
+            _logger.LogInformation("User updated successfully");
 
             await _context.SaveChangesAsync();
             var response = _mapper.Map<UserResponse>(user);
@@ -50,6 +51,8 @@ namespace SANDBOX.Services.UsersService
 
             if (user == null)
                 throw new NotFoundException("User does not exist");
+
+            _logger.LogInformation("User deleted successfully");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();

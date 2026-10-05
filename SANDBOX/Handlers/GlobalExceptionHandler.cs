@@ -4,7 +4,7 @@ using SANDBOX.Exceptions;
 
 namespace SANDBOX.Handlers
 {
-    public class GlobalExceptionHandler : IExceptionHandler
+    public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> _logger) : IExceptionHandler
     {
         public async ValueTask<bool> TryHandleAsync(
             HttpContext httpContext, 
@@ -24,6 +24,11 @@ namespace SANDBOX.Handlers
 
                 _ => StatusCodes.Status500InternalServerError
             };
+
+            if (statusCode == 500)
+                _logger.LogError(exception, "Something went wrong");
+            else
+                _logger.LogWarning(exception.Message);
 
             var problem = new ProblemDetails
             {

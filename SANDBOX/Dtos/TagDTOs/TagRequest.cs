@@ -1,7 +1,11 @@
-﻿namespace SANDBOX.Dtos.TagDTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SANDBOX.Dtos.TagDTOs
 {
     public class TagRequest
     {
-        public string Name { get; set; } = "";
+        [Required]
+        [StringLength(50, MinimumLength = 3)]
+        public string Name { get; set; } = null!;
     }
 }

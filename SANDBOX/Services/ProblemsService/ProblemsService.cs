@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace SANDBOX.Services.ProblemsService
 {
-    public class ProblemsService(AppDbContext _context, IMapper _mapper) : IProblemsService
+    public class ProblemsService(AppDbContext _context, IMapper _mapper, ILogger<ProblemsService> _logger) : IProblemsService
     {
         public async Task<List<ProblemResponse>> GetAllProblems()
         {
@@ -37,6 +37,8 @@ namespace SANDBOX.Services.ProblemsService
             _context.Problems.Add(newProblem);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Problem created successfully");
+
             var response = _mapper.Map<ProblemResponse>(newProblem);
             return response;
         }
@@ -48,6 +50,7 @@ namespace SANDBOX.Services.ProblemsService
                 throw new NotFoundException("Problem does not exist");
 
             _mapper.Map(request, problem);
+            _logger.LogInformation("Problem updated successfully");
             
             await _context.SaveChangesAsync();
             var response = _mapper.Map<ProblemResponse>(problem);
@@ -59,6 +62,8 @@ namespace SANDBOX.Services.ProblemsService
 
             if (problem == null)
                 throw new NotFoundException("Problem does not exist");
+
+            _logger.LogInformation("Problem deleted successfully");
 
             _context.Problems.Remove(problem);
             await _context.SaveChangesAsync();
@@ -87,6 +92,8 @@ namespace SANDBOX.Services.ProblemsService
 
             if (tag == null)
                 throw new NotFoundException("Tag does not exist");
+
+            _logger.LogInformation("Tag {tagName} added to problem {problemName} successfully", tag.Name, problem.Name);
 
             problem.Tags.Add(tag);
             await _context.SaveChangesAsync();

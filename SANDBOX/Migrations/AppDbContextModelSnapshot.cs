@@ -34,7 +34,7 @@ namespace SANDBOX.Migrations
 
                     b.HasIndex("UsersId");
 
-                    b.ToTable("GroupUser");
+                    b.ToTable("GroupUser", (string)null);
                 });
 
             modelBuilder.Entity("HomeworkProblem", b =>
@@ -49,7 +49,7 @@ namespace SANDBOX.Migrations
 
                     b.HasIndex("ProblemsId");
 
-                    b.ToTable("HomeworkProblem");
+                    b.ToTable("HomeworkProblem", (string)null);
                 });
 
             modelBuilder.Entity("ProblemTag", b =>
@@ -64,7 +64,7 @@ namespace SANDBOX.Migrations
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("ProblemTag");
+                    b.ToTable("ProblemTag", (string)null);
                 });
 
             modelBuilder.Entity("ProblemUser", b =>
@@ -79,7 +79,7 @@ namespace SANDBOX.Migrations
 
                     b.HasIndex("UsersWhoSolvedId");
 
-                    b.ToTable("ProblemUser");
+                    b.ToTable("ProblemUser", (string)null);
                 });
 
             modelBuilder.Entity("SANDBOX.Models.Group", b =>
@@ -99,7 +99,7 @@ namespace SANDBOX.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Groups");
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("SANDBOX.Models.Homework", b =>
@@ -124,7 +124,7 @@ namespace SANDBOX.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("Homeworks");
+                    b.ToTable("Homeworks", (string)null);
                 });
 
             modelBuilder.Entity("SANDBOX.Models.Problem", b =>
@@ -144,7 +144,7 @@ namespace SANDBOX.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Problems");
+                    b.ToTable("Problems", (string)null);
                 });
 
             modelBuilder.Entity("SANDBOX.Models.Tag", b =>
@@ -164,7 +164,7 @@ namespace SANDBOX.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("SANDBOX.Models.User", b =>
@@ -199,7 +199,7 @@ namespace SANDBOX.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("GroupUser", b =>

@@ -10,7 +10,7 @@ using SANDBOX.Models;
 
 namespace SANDBOX.Services.GroupsService
 {
-    public class GroupsService(AppDbContext _context, IMapper _mapper) : IGroupsService
+    public class GroupsService(AppDbContext _context, IMapper _mapper, ILogger<GroupsService> _logger) : IGroupsService
     {
         public async Task<List<GroupResponse>> GetAllGroups()
         {
@@ -36,6 +36,8 @@ namespace SANDBOX.Services.GroupsService
             _context.Add(newGroup);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Group created successfully");
+
             var response = _mapper.Map<GroupResponse>(newGroup);
             return response;
         }
@@ -47,6 +49,7 @@ namespace SANDBOX.Services.GroupsService
                 throw new NotFoundException("Group does not exist");
 
             _mapper.Map(request, group);
+            _logger.LogInformation("Group {groupName} updated successfully", group.Name);
 
             await _context.SaveChangesAsync();
             var response = _mapper.Map<GroupResponse>(group);
@@ -58,6 +61,8 @@ namespace SANDBOX.Services.GroupsService
 
             if (group == null)
                 throw new NotFoundException("Group does not exist");
+
+            _logger.LogInformation("Group {groupName} deleted successfull", group.Name);
 
             _context.Remove(group);
             await _context.SaveChangesAsync();
@@ -84,6 +89,8 @@ namespace SANDBOX.Services.GroupsService
 
             if (group == null)
                 throw new NotFoundException("Group does not exist");
+
+            _logger.LogInformation("{Username} added to group {groupName} successfully", user.Username, group.Name);
 
             user.Groups.Add(group);
             await _context.SaveChangesAsync();
@@ -114,6 +121,8 @@ namespace SANDBOX.Services.GroupsService
                 hw.Problems.Add(p);
             }
             group.HWs.Add(hw);
+
+            _logger.LogInformation("Homework added to group {groupName} successfully", group.Name);
 
             await _context.SaveChangesAsync();
         }

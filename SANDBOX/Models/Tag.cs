@@ -3,8 +3,8 @@
     public class Tag
     {
         public int Id { get; set; }
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = null!;
 
-        public List<Problem> Problems { get; set; } = [];
+        public List<Problem> Problems { get; set; } = null!;
     }
 }

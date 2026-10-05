@@ -8,7 +8,7 @@ using SANDBOX.Models;
 
 namespace SANDBOX.Services.TagsService
 {
-    public class TagsService(AppDbContext _context, IMapper _mapper) : ITagsService
+    public class TagsService(AppDbContext _context, IMapper _mapper, ILogger<TagsService> _logger) : ITagsService
     {
         public async Task<List<TagResponse>> GetAllTags()
         {
@@ -28,6 +28,18 @@ namespace SANDBOX.Services.TagsService
 
             return tag;
         }
+        public async Task<TagResponse> CreateTag(TagRequest request)
+        {
+            var newTag = _mapper.Map<Tag>(request);
+            _context.Add(newTag);
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Tag created successfully");
+
+            var response = _mapper.Map<TagResponse>(newTag);
+            return response;
+        }
         public async Task<TagResponse> UpdateTag(int id, TagRequest request)
         {
             var tag = await _context.Tags.FindAsync(id);
@@ -36,17 +48,10 @@ namespace SANDBOX.Services.TagsService
                 throw new NotFoundException("Tag does not exist");
 
             _mapper.Map(request, tag);
+            _logger.LogInformation("Tag updated successfully");
 
             await _context.SaveChangesAsync();
             var response = _mapper.Map<TagResponse>(tag);
-            return response;
-        }
-        public async Task<TagResponse> CreateTag(TagRequest request)
-        {
-            var newTag = _mapper.Map<Tag>(request);
-            _context.Add(newTag);
-            await _context.SaveChangesAsync();
-            var response = _mapper.Map<TagResponse>(newTag);
             return response;
         }
         public async Task DeleteTag(TagRequest deletedTag)
@@ -55,6 +60,8 @@ namespace SANDBOX.Services.TagsService
 
             if (tag == null)
                 throw new NotFoundException("Tag does not exist");
+
+            _logger.LogInformation("Tag deleted successfully");
 
             _context.Tags.Remove(tag);
             await _context.SaveChangesAsync();

@@ -1,7 +1,11 @@
-﻿namespace SANDBOX.Dtos.UserDTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SANDBOX.Dtos.UserDTOs
 {
     public class UpdateUserRequest
     {
-        public string Username { get; set; } = "";
+        [Required]
+        [StringLength(50, MinimumLength = 3)]
+        public string Username { get; set; } = null!;
     }
 }

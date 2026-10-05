@@ -14,7 +14,7 @@ using System.Text;
 
 namespace SANDBOX.Services.AuthService
 {
-    public class AuthService(AppDbContext _context, IMapper _mapper, IConfiguration configuration) : IAuthService
+    public class AuthService(AppDbContext _context, IMapper _mapper, IConfiguration configuration, ILogger<AuthService> _logger) : IAuthService
     {
         public async Task<UserResponse> Register(UserDto request)
         {
@@ -27,6 +27,8 @@ namespace SANDBOX.Services.AuthService
 
             user.Username = request.Username;
             user.PasswordHash = hashedPassword;
+
+            _logger.LogInformation("User created successfully");
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -48,6 +50,8 @@ namespace SANDBOX.Services.AuthService
                 AccessToken = CreateToken(user),
                 RefreshToken = await GenerateAndSaveRefreshToken(user)
             };
+
+            _logger.LogInformation("User {UserId} logged in", user.Id);
 
             return response;
         }
